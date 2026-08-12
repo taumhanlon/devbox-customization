@@ -4,6 +4,8 @@ I want you to generate a complete Dev Box customization project that provisions 
 
 Assume the customization will be applied on top of an existing Windows 11 Dev Box base image.
 
+I do not have access to the original devbox yaml.  The only customization available to me in creating a devbox is adding a customization file.
+
 Project Goals
 
 Create all required files and folders for a reusable Dev Box customization solution.
@@ -236,3 +238,6 @@ make the solution idempotent when possible
 If a Dev Box customization schema is uncertain, clearly identify assumptions and provide alternatives.
 
 If the repository devbox-customization doesn't exist create it and commit everything you've created to it.
+Modify the imagedefinition.yaml you created with the correct path to the repository you created or updated.
+Create or update a repository file named prompt.txt that has the complete prompt used.
+Update the repository with the changes you've made.
