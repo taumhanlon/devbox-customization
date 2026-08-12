@@ -1,0 +1,238 @@
+I am a Microsoft CSS Support Engineer using a Microsoft SSD Dev Box.
+
+I want you to generate a complete Dev Box customization project that provisions a new Dev Box as a fully configured Azure Support / HPC Support workstation.
+
+Assume the customization will be applied on top of an existing Windows 11 Dev Box base image.
+
+Project Goals
+
+Create all required files and folders for a reusable Dev Box customization solution.
+
+Generate:
+
+devbox-customization/
+├── README.md
+├── imagedefinition.yaml
+├── scripts/
+│   ├── bootstrap-windows.ps1
+│   ├── bootstrap-wsl.sh
+│   ├── install-vscode-extensions.ps1
+│   └── post-install-validation.ps1
+└── docs/
+    └── setup-walkthrough.md
+
+Workstation Requirements
+
+This Dev Box should be optimized for:
+
+Microsoft CSS Azure Support
+Azure Infrastructure troubleshooting
+Azure Networking
+Azure Storage
+Azure HPC
+Azure CycleCloud
+Slurm
+AKS
+Linux troubleshooting
+Terraform and Bicep deployments
+Windows Software To Install
+
+Install the newest available versions of:
+
+PowerShell 7
+Azure CLI
+Bicep
+Terraform
+kubectl
+Helm
+Git
+VS Code
+Windows Terminal
+Azure Storage Explorer
+Notepad++
+WinMerge
+Python 3.x
+jq
+yq (if available through winget)
+
+Use winget wherever possible.
+
+Include proper error handling and logging.
+
+WSL Requirements
+
+Enable WSL and install Ubuntu.
+
+Generate a bootstrap-wsl.sh script that installs:
+
+git
+curl
+wget
+jq
+dnsutils
+net-tools
+unzip
+zip
+vim
+nano
+python3
+python3-pip
+build-essential
+cmake
+gcc
+g++
+make
+openmpi-bin
+libopenmpi-dev
+
+
+Install Azure CLI within Ubuntu.
+
+Configure useful aliases:
+
+alias k=kubectl
+alias ll='ls -al'
+alias azs='az account show'
+alias azg='az group list -o table'
+
+
+Append aliases to ~/.bashrc.
+
+VS Code Extensions
+
+Install:
+
+ms-azuretools.vscode-bicep
+ms-vscode.azurecli
+ms-kubernetes-tools.vscode-kubernetes-tools
+hashicorp.terraform
+redhat.vscode-yaml
+ms-python.python
+ms-python.vscode-pylance
+GitHub.copilot
+GitHub.copilot-chat
+ms-vscode.powershell
+
+Azure Support Engineer Requirements
+
+Create helpful scripts and configuration for:
+
+Azure CLI
+
+Verify installations by running:
+
+az version
+
+Terraform
+
+Verify:
+
+terraform version
+
+Bicep
+
+Verify:
+
+az bicep version
+
+kubectl
+
+Verify:
+
+kubectl version --client
+
+CycleCloud / HPC Requirements
+
+Add support tooling commonly useful for:
+
+CycleCloud troubleshooting
+Slurm troubleshooting
+MPI/OpenMPI
+Network troubleshooting
+
+Include:
+
+nslookup
+dig
+ping
+traceroute
+ssh
+scp
+tcpdump
+
+
+Install Linux packages that provide these commands when necessary.
+
+Create a section in the README explaining why each package is useful for Azure HPC support work.
+
+Validation Script
+
+Create:
+
+post-install-validation.ps1
+
+
+that verifies:
+
+PowerShell installed
+Azure CLI installed
+Terraform installed
+Bicep installed
+kubectl installed
+VS Code installed
+WSL installed
+Ubuntu installed
+
+Output a clear pass/fail summary.
+
+Logging Requirements
+
+All PowerShell scripts should:
+
+use strict mode
+stop on errors
+log actions to:
+C:\DevBoxSetup\Logs
+
+
+Automatically create missing directories.
+
+Documentation Requirements
+
+Generate:
+
+README.md
+
+Include:
+
+architecture overview
+folder structure
+installation flow
+assumptions
+troubleshooting section
+validation steps
+how to update tool versions
+setup-walkthrough.md
+
+Create a complete step-by-step guide for:
+
+Creating a Dev Box
+Adding customization
+Importing the image definition
+Running provisioning
+Validating installations
+Troubleshooting failures
+Output Requirements
+
+For every file:
+
+display the full file path
+then output the entire file contents
+do not truncate content
+make all scripts production-quality
+include comments throughout
+use PowerShell best practices
+make the solution idempotent when possible
+If a Dev Box customization schema is uncertain, clearly identify assumptions and provide alternatives.
+
+If the repository devbox-customization doesn't exist create it and commit everything you've created to it.
