@@ -1,0 +1,36 @@
+# Microsoft Dev Box team customization image definition.
+# Replace CONTOSO with the GitHub organization that hosts this project. For a
+# private repository, replace this download step with an approved catalog task
+# that retrieves authenticated artifacts from Azure DevOps or Azure Storage.
+$schema: "1.0"
+name: azure-support-hpc-workstation
+image: microsoftwindowsdesktop_windows-ent-cpc_win11-24H2-ent-cpc
+
+tasks:
+  - name: ~/powershell
+    description: Install and configure Azure Support and HPC workstation tools
+    parameters:
+      command: |
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = 'Stop'
+        $ProgressPreference = 'SilentlyContinue'
+
+        $repositoryRawUrl = 'https://raw.githubusercontent.com/CONTOSO/devbox-customization/main'
+        $setupRoot = 'C:\DevBoxSetup'
+        $scriptsRoot = Join-Path $setupRoot 'scripts'
+        $logsRoot = Join-Path $setupRoot 'Logs'
+        New-Item -ItemType Directory -Path $scriptsRoot, $logsRoot -Force | Out-Null
+
+        $scriptNames = @(
+          'bootstrap-windows.ps1',
+          'bootstrap-wsl.sh',
+          'install-vscode-extensions.ps1',
+          'post-install-validation.ps1'
+        )
+        foreach ($scriptName in $scriptNames) {
+          $uri = "$repositoryRawUrl/scripts/$scriptName"
+          $destination = Join-Path $scriptsRoot $scriptName
+          Invoke-WebRequest -Uri $uri -OutFile $destination -UseBasicParsing
+        }
+
+        & (Join-Path $scriptsRoot 'bootstrap-windows.ps1') -SourceRoot $setupRoot
