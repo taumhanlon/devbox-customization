@@ -1,15 +1,15 @@
 # Dev Box setup walkthrough
 
-This guide deploys the Azure Support / HPC customization as a team customization. Portal labels can vary as Dev Box features roll out; the equivalent Azure CLI or REST workflow is a valid alternative when a blade is not exposed in the tenant.
+This guide uses the only available deployment path: uploading a user customization file while creating a Dev Box. The existing pool selects the Windows 11 base image; no original pool YAML or project catalog administration is required for the happy path.
 
 ## Prerequisites
 
 - A Microsoft Dev Center, project, network connection, and Dev Box pool backed by Windows 11.
-- DevCenter Project Admin or Contributor rights to attach a catalog and configure the project/pool.
 - Dev Box User rights to create a Dev Box.
-- Project-level catalogs and team customizations enabled for the Dev Center and project.
+- User customizations enabled for the project.
+- Administrator permission to run system tasks, or a project catalog that preapproves the required elevated PowerShell task.
 - Outbound HTTPS from the Dev Box to WinGet, GitHub (or the chosen artifact host), Microsoft package repositories, Ubuntu repositories, and the VS Code Marketplace.
-- A repository containing this project. Replace `CONTOSO` in `imagedefinition.yaml` before deployment.
+- A local copy of `imagedefinition.yaml` from `https://github.com/taumhanlon/devbox-customization`.
 
 ## 1. Create or select a Dev Box project and pool
 
@@ -22,35 +22,30 @@ This guide deploys the Azure Support / HPC customization as a team customization
 
 If a pool already exists, verify its image includes Microsoft App Installer/WinGet and supports nested virtualization required by WSL 2.
 
-## 2. Add the customization repository
+## 2. Add the customization file
 
-1. Push this project to GitHub or Azure DevOps. Protect the default branch and review changes before promotion.
-2. In `imagedefinition.yaml`, set `$repositoryRawUrl` to the raw-content base URL for that repository and branch.
-3. In the Dev Center project, open **Catalogs** and choose **Add**.
-4. Select the repository provider, supply the repository/branch/catalog path, and configure authentication without embedding credentials in YAML.
-5. Enable automatic or manual catalog synchronization according to change-control policy.
-6. Start a sync and wait for the catalog status to report success.
-
-A private repository usually cannot be downloaded by `Invoke-WebRequest` without credentials. In that case, publish the scripts as an authenticated Azure DevOps universal package, use a secured Azure Storage artifact, or wrap the bootstrap in an approved custom catalog task that retrieves content with managed identity.
+1. Download the repository or save its raw `imagedefinition.yaml` file locally.
+2. Review the YAML and scripts before use. The configured script source is `https://raw.githubusercontent.com/taumhanlon/devbox-customization/main`.
+3. Sign in to the Microsoft developer portal at `https://devportal.microsoft.com`.
+4. Select **New** > **New dev box**, enter a name, and select the existing project and Windows 11 pool.
+5. Select **Apply customizations** and then **Continue**.
+6. Select **Upload a customization file(s)** > **Add customizations from file**, and choose `imagedefinition.yaml`.
 
 ## 3. Import the image definition
 
-The source project keeps `imagedefinition.yaml` at its requested root. Catalog layouts can require image definitions beneath a configured folder.
+There is no separate image-definition import in this access model. The filename is retained because it is part of the project contract, but the file is an uploadable customization and intentionally omits `image`.
 
-1. If the catalog root scans image definitions recursively, retain the file at the repository root.
-2. If the catalog contract requires a conventional path, copy the file to `image-definitions/azure-support-hpc-workstation/imagedefinition.yaml` in the deployment repository.
-3. Synchronize the catalog again.
-4. Open the project image definitions/team customizations view and confirm `azure-support-hpc-workstation` is recognized.
-5. Associate the image definition/team customization with the intended pool. If imaging is enabled, optionally build and publish a flattened image after the customization succeeds in a test pool.
-
-The schema assumes `$schema: "1.0"`, `tasks` for LocalSystem work, and the built-in `~/powershell` task. If the tenant rejects that task, use an administrator-approved custom task or an Azure Compute Gallery image. If the pool controls the base image independently, adapt the task block into the tenant's user/team customization file and omit or replace the `image` field as required by its current schema.
+1. Select **Validate** after adding the file.
+2. Confirm the portal recognizes `azure-support-hpc-workstation` and the `~/powershell` task.
+3. If validation rejects the system task, stop: an uploaded file cannot grant itself elevation. Ask the Dev Center administrator to preapprove an elevated custom task, apply the same bootstrap as a team customization, or provide a base image with WSL enabled.
+4. If organizational policy requires a repository selection instead of local upload, Microsoft currently requires that repository customization file to be named `workload.yaml`. Publish a copy of this YAML under that name and provide the repository URL in the portal.
 
 ## 4. Run provisioning
 
 1. Browse to the Microsoft developer portal at `https://devportal.microsoft.com`.
 2. Select **New** > **New dev box**.
 3. Enter a name and select the prepared project and pool.
-4. Select the team customization/image definition. Where user customization upload is enabled, choose **Apply customizations** and upload the tenant-approved YAML instead.
+4. Confirm the uploaded customization is listed and validated.
 5. Submit the request and monitor the creation and customization operations.
 6. Connect after the Dev Box reaches **Running** and customization reports success.
 

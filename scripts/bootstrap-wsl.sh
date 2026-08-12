@@ -46,8 +46,8 @@ printf 'Types: deb\nURIs: https://packages.microsoft.com/repos/azure-cli/\nSuite
 apt-get update
 apt-get install -y azure-cli
 
-# Make aliases available globally and explicitly source them from the invoking
-# account's ~/.bashrc. Future Ubuntu users also receive them through /etc/profile.d.
+# Make aliases available globally and append the requested aliases directly to
+# root, existing user, and future user .bashrc files without duplicating them.
 alias_file="/etc/profile.d/azure-support-aliases.sh"
 cat > "${alias_file}" <<'ALIASES'
 alias k=kubectl
@@ -57,13 +57,30 @@ alias azg='az group list -o table'
 ALIASES
 chmod 0644 "${alias_file}"
 
-user_home="${HOME:-/root}"
-bashrc="${user_home}/.bashrc"
-touch "${bashrc}"
-source_line="source ${alias_file}"
-if ! grep -Fqx "${source_line}" "${bashrc}"; then
-    printf '\n# Azure Support / HPC aliases\n%s\n' "${source_line}" >> "${bashrc}"
-fi
+append_aliases() {
+    local bashrc="$1"
+    touch "${bashrc}"
+    if ! grep -Fq '# Azure Support / HPC aliases' "${bashrc}"; then
+        cat >> "${bashrc}" <<'ALIASES'
+
+# Azure Support / HPC aliases
+alias k=kubectl
+alias ll='ls -al'
+alias azs='az account show'
+alias azg='az group list -o table'
+ALIASES
+    fi
+}
+
+append_aliases /root/.bashrc
+append_aliases /etc/skel/.bashrc
+for home_directory in /home/*; do
+    if [[ -d "${home_directory}" ]]; then
+        append_aliases "${home_directory}/.bashrc"
+        owner_and_group="$(stat -c '%U:%G' "${home_directory}")"
+        chown "${owner_and_group}" "${home_directory}/.bashrc"
+    fi
+done
 
 echo "[$(date --iso-8601=seconds)] Verifying core Linux tooling"
 az version

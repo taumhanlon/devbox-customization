@@ -1,0 +1,6 @@
+# PowerShell remains native to Windows; shell scripts must retain Unix line endings.
+*.ps1 text eol=crlf
+*.sh text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf

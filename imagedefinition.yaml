@@ -1,10 +1,9 @@
-# Microsoft Dev Box team customization image definition.
-# Replace CONTOSO with the GitHub organization that hosts this project. For a
-# private repository, replace this download step with an approved catalog task
-# that retrieves authenticated artifacts from Azure DevOps or Azure Storage.
+# Microsoft Dev Box user customization file for local upload during creation.
+# The system task is required because enabling WSL and installing machine-wide
+# software require elevation. Portal validation will reject it when the Dev Box
+# user is not an administrator and the project catalog has not preapproved it.
 $schema: "1.0"
 name: azure-support-hpc-workstation
-image: microsoftwindowsdesktop_windows-ent-cpc_win11-24H2-ent-cpc
 
 tasks:
   - name: ~/powershell
@@ -15,7 +14,7 @@ tasks:
         $ErrorActionPreference = 'Stop'
         $ProgressPreference = 'SilentlyContinue'
 
-        $repositoryRawUrl = 'https://github.com/taumhanlon/devbox-customization/main'
+        $repositoryRawUrl = 'https://raw.githubusercontent.com/taumhanlon/devbox-customization/main'
         $setupRoot = 'C:\DevBoxSetup'
         $scriptsRoot = Join-Path $setupRoot 'scripts'
         $logsRoot = Join-Path $setupRoot 'Logs'

@@ -6,7 +6,7 @@ This project configures a Windows 11 Microsoft Dev Box as a repeatable workstati
 
 Provisioning is split into four idempotent layers:
 
-1. `imagedefinition.yaml` runs the built-in Dev Box PowerShell task as `LocalSystem`. It downloads the versioned scripts to `C:\DevBoxSetup\scripts` and starts the Windows bootstrap.
+1. You upload `imagedefinition.yaml` as the customization file while creating the Dev Box. Its built-in PowerShell system task downloads scripts from this public repository to `C:\DevBoxSetup\scripts` and starts the Windows bootstrap.
 2. `bootstrap-windows.ps1` installs or upgrades Windows software with WinGet, enables WSL 2, installs Ubuntu 24.04, and invokes the remaining scripts.
 3. `bootstrap-wsl.sh` installs Ubuntu support, networking, build, and OpenMPI packages and configures Azure CLI and shell aliases.
 4. `install-vscode-extensions.ps1` uses a machine-wide `VSCODE_EXTENSIONS` directory. `post-install-validation.ps1` reports a final pass/fail result.
@@ -19,6 +19,7 @@ Every PowerShell script uses strict mode, terminating errors, and transcripts un
 devbox-customization/
 |-- README.md
 |-- imagedefinition.yaml
+|-- prompt.txt
 |-- scripts/
 |   |-- bootstrap-windows.ps1
 |   |-- bootstrap-wsl.sh
@@ -55,10 +56,10 @@ For CycleCloud and Slurm cases, these tools cover node access, scheduler-log col
 
 ## Installation flow
 
-1. Fork or publish this directory in a repository reachable by the Dev Box during provisioning.
-2. Replace `CONTOSO` in `imagedefinition.yaml` with the repository owner. Change the branch or repository name in `$repositoryRawUrl` when necessary.
-3. Add the repository as a project catalog and import/select the image definition, or upload a customization file using the alternative described below.
-4. Create a Dev Box from a Windows 11 pool and apply the customization.
+1. Download `imagedefinition.yaml` from `https://github.com/taumhanlon/devbox-customization`.
+2. In the Microsoft developer portal, create a Dev Box from the existing Windows 11 pool and select **Apply customizations**.
+3. Select **Upload a customization file(s)**, add `imagedefinition.yaml`, and select **Validate**.
+4. Create the Dev Box after validation succeeds. The YAML downloads this repository's scripts from `https://raw.githubusercontent.com/taumhanlon/devbox-customization/main`.
 5. If Windows reports a pending restart while enabling WSL, restart once and rerun `C:\DevBoxSetup\scripts\bootstrap-windows.ps1` from an elevated PowerShell session.
 6. Review `C:\DevBoxSetup\Logs` and run the validation script again if needed.
 
@@ -66,17 +67,18 @@ See [docs/setup-walkthrough.md](docs/setup-walkthrough.md) for the complete port
 
 ## Assumptions and schema alternatives
 
-The image definition uses the current Dev Box image-definition schema (`$schema: "1.0"`), a Windows 11 24H2 marketplace image identifier, and the built-in `~/powershell` system task. System tasks run as `LocalSystem`; this is required for Windows features and machine-wide installs.
+Despite its required filename, `imagedefinition.yaml` is now a user customization file, not the original pool image definition. It intentionally has no `image` property because the existing Dev Box pool selects the Windows 11 base image. It uses the documented customization schema (`$schema: "1.0"`, `name`, and task sections).
 
-Dev Box catalog and imaging features evolve, and tenant policy can restrict built-in system tasks. Confirm these points in the target tenant:
+The solution needs a `tasks` system task because enabling WSL and installing machine-wide software require elevation. Microsoft Dev Box permits a user customization to run a system task only when the user is an administrator or the project catalog explicitly preapproves the task. Standard users cannot elevate a built-in PowerShell task through an uploaded file. If portal validation rejects `~/powershell`, this requirement cannot be solved solely by changing user YAML; ask the Dev Center administrator to approve a custom catalog task, apply a team customization, or include WSL and the tools in the base image.
 
-- The base image identifier is available in the target region. If the pool already owns image selection, use the YAML as a customization file or replace `image` with the approved gallery image identifier.
-- The project catalog recognizes image definitions at its configured catalog path. Some catalogs require this file under `image-definitions/azure-support-hpc-workstation/imagedefinition.yaml`; copy it there in the catalog without changing this project's source layout.
-- The Dev Box has outbound HTTPS access to GitHub, Microsoft package repositories, WinGet, and the VS Code Marketplace.
-- The `~/powershell` task is approved for system context. If it is not, create an approved custom catalog task whose `main.ps1` invokes `bootstrap-windows.ps1`, or bake these scripts into an Azure Compute Gallery image.
-- A private source repository needs authenticated artifact retrieval. Do not put a token in YAML. Use an approved catalog task with managed identity/Key Vault, an Azure DevOps universal package task, or publish immutable scripts to a secured storage account.
+Additional assumptions:
 
-For a user customization, use `userTasks` only for user-scoped actions. WSL feature enablement and machine-wide installation still need a team customization, custom image, or administrator-approved task.
+- User customizations are enabled on the Dev Box project and the attached catalog exposes the built-in `~/powershell` task.
+- The Dev Box has outbound HTTPS access to GitHub, Microsoft package repositories, WinGet, Ubuntu repositories, and the VS Code Marketplace.
+- The base image contains Microsoft App Installer/WinGet and supports WSL 2 virtualization.
+- The public `main` branch is acceptable as the script source. For controlled production rollout, pin `$repositoryRawUrl` to a reviewed commit or release tag.
+
+For a nonadministrative fallback, move only user-scoped installs into `userTasks`. That fallback cannot enable Windows features or guarantee machine-wide installations.
 
 ## Validation
 
@@ -97,7 +99,8 @@ wsl -d Ubuntu-24.04 -- bash -lc 'az version && mpirun --version && command -v di
 
 ## Troubleshooting
 
-- **Customization cannot download scripts:** verify `$repositoryRawUrl`, repository visibility, proxy policy, and TLS access to `raw.githubusercontent.com`. Prefer an internal artifact source for enterprise deployment.
+- **Customization validation rejects the system task:** the user is not an administrator or `~/powershell` is not approved. A Dev Center administrator must provide an elevated catalog task, team customization, or suitable base image.
+- **Customization cannot download scripts:** verify proxy policy and TLS access to `raw.githubusercontent.com/taumhanlon/devbox-customization`. Prefer a reviewed commit URL or internal artifact source for enterprise deployment.
 - **WinGet is unavailable:** update Microsoft App Installer in the base image or choose a supported Windows 11 Dev Box image that includes WinGet.
 - **A package ID is unavailable:** run `winget search <name>` and update the ID in `bootstrap-windows.ps1`. Sources and regional availability can differ.
 - **WSL asks for a restart:** restart the Dev Box, open elevated PowerShell, and rerun the Windows bootstrap. Existing package installs are reused or upgraded.
