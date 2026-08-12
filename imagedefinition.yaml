@@ -15,7 +15,7 @@ tasks:
         $ErrorActionPreference = 'Stop'
         $ProgressPreference = 'SilentlyContinue'
 
-        $repositoryRawUrl = 'https://raw.githubusercontent.com/CONTOSO/devbox-customization/main'
+        $repositoryRawUrl = 'https://github.com/taumhanlon/devbox-customization/main'
         $setupRoot = 'C:\DevBoxSetup'
         $scriptsRoot = Join-Path $setupRoot 'scripts'
         $logsRoot = Join-Path $setupRoot 'Logs'
